@@ -3,26 +3,27 @@ package main
 import (
 	"fmt"
 	"jcloud/bins"
+	"jcloud/files"
 	"jcloud/storage"
-	"log"
 )
 
 func main() {
-
-	bin1 := bins.NewBin("123", true, "Test Bin 1")
-	bin2 := bins.NewBin("456", false, "Test Bin 2")
+	fileSystem := files.FileSystem{}
+	storage := storage.NewJsonStorage(fileSystem)
 
 	binList := bins.NewBinList()
-	binList.Bins = append(binList.Bins, bin1, bin2)
+	binList.Bins = append(binList.Bins, bins.NewBin("1", false, "Test Bin"))
 
 	err := storage.SaveBins(binList, "bins.json")
 	if err != nil {
-		log.Fatal("Save error:", err)
+		fmt.Printf("Error saving bins: %v\n", err)
+		return
 	}
 
 	loadedBins, err := storage.LoadBins("bins.json")
 	if err != nil {
-		log.Fatal("Load error:", err)
+		fmt.Printf("Error loading bins: %v\n", err)
+		return
 	}
 
 	fmt.Printf("Loaded bins: %+v\n", loadedBins)

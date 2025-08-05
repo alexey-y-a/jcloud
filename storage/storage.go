@@ -5,11 +5,23 @@ import (
 	"errors"
 	"jcloud/bins"
 	"jcloud/files"
-	"os"
 )
 
-func SaveBins(binList bins.BinList, filename string) error {
-	if !files.IsJason(filename) {
+type Storage interface {
+	SaveBins(binList bins.BinList, filename string) error
+	LoadBins(filename string) (bins.BinList, error)
+}
+
+type JsonStorage struct {
+	files files.FileOperations
+}
+
+func NewJsonStorage(f files.FileOperations) *JsonStorage {
+	return &JsonStorage{files: f}
+}
+
+func (s *JsonStorage) SaveBins(binList bins.BinList, filename string) error {
+	if !s.files.IsJson(filename) {
 		return errors.New("file must have .json extension")
 	}
 
@@ -18,21 +30,17 @@ func SaveBins(binList bins.BinList, filename string) error {
 		return err
 	}
 
-	err = os.WriteFile(filename, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.files.WriteFile(filename, data, 0644)
 }
 
-func LoadBins(filename string) (bins.BinList, error) {
+func (s *JsonStorage) LoadBins(filename string) (bins.BinList, error) {
 	var binList bins.BinList
 
-	if !files.IsJason(filename) {
+	if !s.files.IsJson(filename) {
 		return binList, errors.New("file must have .json extension")
 	}
 
-	data, err := files.ReadFile(filename)
+	data, err := s.files.ReadFile(filename)
 	if err != nil {
 		return binList, err
 	}
@@ -43,5 +51,4 @@ func LoadBins(filename string) (bins.BinList, error) {
 	}
 
 	return binList, nil
-
 }
