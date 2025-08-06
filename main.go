@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"jcloud/api"
 	"jcloud/bins"
 	"jcloud/config"
 	"jcloud/files"
@@ -10,7 +11,9 @@ import (
 
 func main() {
 	cfg := config.Load()
-	fmt.Printf("Loaded API Key: %s\n", cfg.APIKey)
+
+	apiClient := api.New(cfg)
+	apiClient.MakeRequest()
 
 	fileSystem := files.FileSystem{}
 	storage := storage.NewJsonStorage(fileSystem)
