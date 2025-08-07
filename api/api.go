@@ -101,3 +101,94 @@ func (a *API) CreateBin(filePath, name string) (*bins.Bin, error) {
 
 	return &result.Metadata, nil
 }
+
+func (a *API) UpdateBin(filePath, id string) (*bins.Bin, error) {
+	fs := files.FileSystem{}
+	data, err := fs.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %v", err)
+	}
+
+	var content interface{}
+	if err := json.Unmarshal(data, &content); err != nil {
+		return nil, fmt.Errorf("file must contain valid JSON: %v", err)
+	}
+
+	resp, err := a.makeRequest("PUT", "/"+id, map[string]interface{}{
+		"data": content,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Metadata bins.Bin `json:"metadata"`
+	}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("error decoding response: %v", err)
+	}
+
+	binList, err := a.storage.LoadBins("bins.json")
+	if err != nil {
+		return nil, fmt.Errorf("error loading bins: %v", err)
+	}
+
+	for i, b := range binList.Bins {
+		if b.ID == id {
+			binList.Bins[i] = result.Metadata
+			break
+		}
+	}
+
+	if err := a.storage.SaveBins(binList, "bins.json"); err != nil {
+		return nil, fmt.Errorf("error saving bins: %v", err)
+	}
+
+	return &result.Metadata, nil
+}
+
+func (a *API) DeleteBin(id string) error {
+	_, err := a.makeRequest("DELETE", "/"+id, nil)
+	if err != nil {
+		return err
+	}
+
+	binList, err := a.storage.LoadBins("bins.json")
+	if err != nil {
+		return fmt.Errorf("error loading bins: %v", err)
+	}
+
+	for i, b := range binList.Bins {
+		if b.ID == id {
+			binList.Bins = append(binList.Bins[:i], binList.Bins[i+1:]...)
+			break
+		}
+	}
+
+	return a.storage.SaveBins(binList, "bins.json")
+}
+
+func (a *API) GetBin(id string) (*bins.Bin, error) {
+	resp, err := a.makeRequest("GET", "/"+id, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Record   interface{} `json:"record"`
+		Metadata bins.Bin    `json:"metadata"`
+	}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("error decoding response: %v", err)
+	}
+
+	return &result.Metadata, nil
+}
+
+func (a *API) ListBins() (bins.BinList, error) {
+	binList, err := a.storage.LoadBins("bins.json")
+	if err != nil {
+		return bins.BinList{}, fmt.Errorf("error loading bins: %v", err)
+	}
+	return binList, nil
+}
