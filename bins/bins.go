@@ -2,6 +2,10 @@ package bins
 
 import "time"
 
+func TimeNow() time.Time {
+	return time.Now()
+}
+
 type Bin struct {
 	ID        string    `json:"id"`
 	Private   bool      `json:"private"`
