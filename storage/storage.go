@@ -13,15 +13,15 @@ type Storage interface {
 }
 
 type JsonStorage struct {
-	files files.FileOperations
+	Files files.FileOperations
 }
 
 func NewJsonStorage(f files.FileOperations) *JsonStorage {
-	return &JsonStorage{files: f}
+	return &JsonStorage{Files: f}
 }
 
 func (s *JsonStorage) SaveBins(binList bins.BinList, filename string) error {
-	if !s.files.IsJson(filename) {
+	if !s.Files.IsJson(filename) {
 		return errors.New("file must have .json extension")
 	}
 
@@ -30,17 +30,17 @@ func (s *JsonStorage) SaveBins(binList bins.BinList, filename string) error {
 		return err
 	}
 
-	return s.files.WriteFile(filename, data, 0644)
+	return s.Files.WriteFile(filename, data, 0644)
 }
 
 func (s *JsonStorage) LoadBins(filename string) (bins.BinList, error) {
 	var binList bins.BinList
 
-	if !s.files.IsJson(filename) {
+	if !s.Files.IsJson(filename) {
 		return binList, errors.New("file must have .json extension")
 	}
 
-	data, err := s.files.ReadFile(filename)
+	data, err := s.Files.ReadFile(filename)
 	if err != nil {
 		return binList, err
 	}
